@@ -1,0 +1,92 @@
+# Define locations for which builds should be created.
+# For each build we specify a subsampling scheme via an explicit key.
+# If the name of the focal geography differs from the build name this needs to
+# be specified explicity as geographic_name. In addition, we require the
+# geographic scale the build focuses on. Together name and scale serve a look-up
+# in the geo_hierarchy to define region, country, division, etc
+builds:
+  DenmarkOnly:
+    subsampling_scheme: denmark_only
+    geographic_scale: country
+    region: Europe
+    country: Denmark
+
+  DenmarkGlobal:
+    subsampling_scheme: denmark_global
+    geographic_scale: country
+    region: Europe
+    country: Denmark
+
+
+subsampling:
+  # Default subsampling logic for countries
+  denmark_only:
+    # Focal samples for country
+    country:
+      group_by: "division year month"
+      seq_per_group: 9000
+      exclude: "--exclude-where 'country!={country}'"
+    # Contextual samples from country's region
+    
+  denmark_global:
+    # Focal samples for country
+    country:
+      group_by: "division year month"
+      seq_per_group: 9000
+      exclude: "--exclude-where 'country!={country}'"
+    # Contextual samples from country's region
+    region:
+      group_by: "country year month"
+      seq_per_group: 20
+      exclude: "--exclude-where 'country={country}' 'region!={region}'"
+      priorities:
+        type: "proximity"
+        focus: "country"
+    # Contextual samples from the rest of the world,
+    # excluding the current region to avoid resampling.
+    global:
+      group_by: "country year month"
+      seq_per_group: 10
+      exclude: "--exclude-where 'region={region}'"
+      priorities:
+        type: "proximity"
+        focus: "country"
+
+
+  # Default subsampling logic for divisions
+  municipality:
+    # Focal samples for division
+    division:
+      group_by: "year month"
+      seq_per_group: 3000
+      exclude: "--exclude-where 'region!={region}' 'country!={country}' 'division!={division}'"
+    # Contextual samples from division's country
+    country:
+      group_by: "division year month"
+      seq_per_group: 20
+      exclude: "--exclude-where 'region!={region}' 'country!={country}' 'division={division}'"
+      priorities:
+        type: "proximity"
+        focus: "division"
+    # Contextual samples from division's region
+    region:
+      group_by: "country year month"
+      seq_per_group: 10
+      exclude: "--exclude-where 'region!={region}' 'country={country}'"
+      priorities:
+        type: "proximity"
+        focus: "division"
+    # Contextual samples from the rest of the world, excluding the current
+    # division to avoid resampling.
+    global:
+      group_by: "country year month"
+      seq_per_group: 5
+      exclude: "--exclude-where 'region={region}'"
+      priorities:
+        type: "proximity"
+        focus: "division"
+files:
+  colors: "my_profiles/denmark/colors.tsv"
+  auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
+  ordering: "my_profiles/denmark/color_ordering.tsv"
+  lat_longs: "my_profiles/denmark/lat_longs.tsv"

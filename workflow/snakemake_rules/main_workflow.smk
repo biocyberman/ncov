@@ -730,13 +730,40 @@ rule rename_legacy_clades:
         with open(output.clade_data, "w") as fh:
             json.dump({"nodes":new_data}, fh)
 
+checkpoint resolve_clades:
+    message: "Resolve subclades "
+    input:
+        tree = rules.refine.output.tree,
+        aa_muts = rules.translate.output.node_data,
+        nuc_muts = rules.ancestral.output.node_data,
+        clades = config["files"]["clades"]
+    output:
+        clade_data = "results/{build_name}/clades_resolve.json",
+        new_clades = "results/{build_name}/new_clades.tsv"
+    log:
+        "logs/clades_resolve_{build_name}.txt"
+    conda: config["conda_environment"]
+    shell:
+        """
+        augur clades-resolve --tree {input.tree} \
+            --mutations {input.nuc_muts} {input.aa_muts} \
+            --clades {input.clades} \
+            --new-clades {output.new_clades} \
+            --max-depth 3 \
+            --output-node-data {output.clade_data} 2>&1 | tee {log}
+        """
+
+def _get_subclades_file(wildcards):
+    # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'DenmarkOnly' else "results/DenmarkOnly/new_clades.tsv"
+    return checkpoints.resolve_clades.get(build_name = "DenmarkOnly").output.new_clades
+
 rule subclades:
     message: "Adding internal clade labels"
     input:
         tree = rules.refine.output.tree,
         aa_muts = rules.translate.output.node_data,
         nuc_muts = rules.ancestral.output.node_data,
-        subclades = config["files"]["subclades"],
+        subclades = _get_subclades_file,
         clades = config["files"]["clades"]
     output:
         clade_data = "results/{build_name}/temp_subclades.json"

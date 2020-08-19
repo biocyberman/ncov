@@ -24,12 +24,13 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--sequences", help="*unaligned* FASTA file of SARS-CoV-2sequences")
-    group.add_argument("--alignment", help="*aligned* FASTA file of SARS-CoV-2 sequences relative to Wuhan-HU-1 with insertions removed")
-    parser.add_argument("--output", type=str, default='clade_assignment.tsv', help="tsv file to write clade definitions to")
-    parser.add_argument("--keep-temporary-files", action='store_true', help="don't clean up")
-    parser.add_argument("--chunk-size", default=10, type=int, help="process this many sequences at once")
-    parser.add_argument("--nthreads", default=1, type=int, help="Number of threads to use in alignment")
+    group.add_argument("-s", "--sequences", help="*unaligned* FASTA file of SARS-CoV-2sequences")
+    group.add_argument("-a", "--alignment", help="*aligned* FASTA file of SARS-CoV-2 sequences relative to Wuhan-HU-1 with insertions removed")
+    parser.add_argument('-c', '--clades', type=str, help='TSV file containing clade definitions', default="defaults/clades.tsv")
+    parser.add_argument("-o", "--output", type=str, default='clade_assignment.tsv', help="tsv file to write clade definitions to")
+    parser.add_argument("-k", "--keep-temporary-files", action='store_true', help="don't clean up")
+    parser.add_argument("-n", "--chunk-size", default=10, type=int, help="process this many sequences at once")
+    parser.add_argument("-t", "--nthreads", default=1, type=int, help="Number of threads to use in alignment")
     args = parser.parse_args()
 
     refname = f"defaults/reference_seq.gb"
@@ -40,7 +41,7 @@ if __name__ == '__main__':
         alignment = SeqIO.parse(args.alignment, 'fasta')
 
     ref = SeqIO.read(refname, 'genbank')
-    clade_designations = read_in_clade_definitions(f"defaults/clades.tsv")
+    clade_designations = read_in_clade_definitions(args.clades)
 
     log_fname = "clade_assignment.log"
     in_fname = "clade_assignment_tmp.fasta"

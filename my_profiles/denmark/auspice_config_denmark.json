@@ -6,6 +6,26 @@
   ],
   "colorings": [
     {
+      "key": "legacy_clade_membership",
+      "title": "Old Nextstrain clade",
+      "type": "categorical"
+    },
+    {
+      "key": "subclade_membership",
+      "title": "Subclade",
+      "type": "categorical"
+    },
+    {
+      "key": "pangolin_lineage",
+      "title": "Pangolin lineage",
+      "type": "categorical"
+    },
+    {
+      "key": "GISAID_clade",
+      "title": "GISAID Clade",
+      "type": "categorical"
+    },
+    {
       "key": "location",
       "title": "Location",
       "type": "categorical"
@@ -93,14 +113,15 @@
   "display_defaults": {
     "color_by": "division",
     "distance_measure": "num_date",
-    "geo_resolution": "division",
+    "geo_resolution": "location",
     "map_triplicate": true,
-    "branch_label": "none"
+    "branch_label": "clade"
   },
   "filters": [
     "recency",
+    "clade_membership",
     "location",
-    "division",
+    "jivision",
     "country",
     "region",
     "host",

@@ -6,13 +6,18 @@
   ],
   "colorings": [
     {
-      "key": "legacy_clade_membership",
-      "title": "Old Nextstrain clade",
+      "key": "division",
+      "title": "Admin Division",
       "type": "categorical"
     },
     {
       "key": "subclade_membership",
       "title": "Subclade",
+      "type": "categorical"
+    },
+    {
+      "key": "legacy_clade_membership",
+      "title": "Old Nextstrain clade",
       "type": "categorical"
     },
     {
@@ -28,11 +33,6 @@
     {
       "key": "location",
       "title": "Location",
-      "type": "categorical"
-    },
-    {
-      "key": "division",
-      "title": "Admin Division",
       "type": "categorical"
     },
     {
@@ -102,6 +102,120 @@
       "key": "region_exposure",
       "title": "Region of exposure",
       "type": "categorical"
+    },
+    {
+      "key": "date_submitted",
+      "title": "Date Submitted",
+      "type": "categorical"
+    },
+    {
+      "key": "focal",
+      "title": "Focal",
+      "type": "categorical"
+    },
+    {
+      "key": "journal_seq",
+      "type": "categorical"
+    },
+    {
+      "key": "ssi_plate",
+      "type": "categorical"
+    },
+    {
+      "key": "recieved_aau",
+      "type": "categorical"
+    },
+    {
+      "key": "Address",
+      "type": "categorical"
+    },
+    {
+      "key": "SymptomsStartDate",
+      "type": "categorical"
+    },
+    {
+      "key": "Symptoms",
+      "type": "categorical"
+    },
+    {
+      "key": "Travel",
+      "type": "categorical"
+    },
+    {
+      "key": "PlaceOfInfection_EN",
+      "type": "categorical"
+    },
+    {
+      "key": "ContactWithCase",
+      "type": "categorical"
+    },
+    {
+      "key": "Occupation",
+      "type": "categorical"
+    },
+    {
+      "key": "ReportAgeGrp",
+      "type": "categorical"
+    },
+    {
+      "key": "CodR_Death30Days",
+      "type": "categorical"
+    },
+    {
+      "key": "CPR_Death30Days",
+      "type": "categorical"
+    },
+    {
+      "key": "DateOfDeath_final",
+      "type": "categorical"
+    },
+    {
+      "key": "Death60Days_final",
+      "type": "categorical"
+    },
+    {
+      "key": "Death30Days_final",
+      "type": "categorical"
+    },
+    {
+      "key": "CitizenshipText",
+      "type": "categorical"
+    },
+    {
+      "key": "RegHospital",
+      "type": "categorical"
+    },
+    {
+      "key": "Doctor",
+      "type": "categorical"
+    },
+    {
+      "key": "Nurse",
+      "type": "categorical"
+    },
+    {
+      "key": "HealthAssist",
+      "type": "categorical"
+    },
+    {
+      "key": "Plejehjemsnavn",
+      "type": "categorical"
+    },
+    {
+      "key": "branche1",
+      "type": "categorical"
+    },
+    {
+      "key": "branche2",
+      "type": "categorical"
+    },
+    {
+      "key": "branche3",
+      "type": "categorical"
+    },
+    {
+      "key": "outbreak",
+      "type": "categorical"
     }
   ],
   "geo_resolutions": [
@@ -118,14 +232,48 @@
     "branch_label": "clade"
   },
   "filters": [
-    "recency",
-    "clade_membership",
-    "location",
     "division",
+    "subclade_membership",
+    "location",
+    "recency",
     "country",
     "region",
     "host",
-    "author"
+    "date",
+    "region_exposure",
+    "country_exposure",
+    "division_exposure",
+    "length",
+    "age",
+    "sex",
+    "date_submitted",
+    "focal",
+    "journal_seq",
+    "ssi_plate",
+    "recieved_aau",
+    "Address",
+    "SymptomsStartDate",
+    "Symptoms",
+    "Travel",
+    "PlaceOfInfection_EN",
+    "ContactWithCase",
+    "Occupation",
+    "ReportAgeGrp",
+    "CodR_Death30Days",
+    "CPR_Death30Days",
+    "DateOfDeath_final",
+    "Death60Days_final",
+    "Death30Days_final",
+    "CitizenshipText",
+    "RegHospital",
+    "Doctor",
+    "Nurse",
+    "HealthAssist",
+    "Plejehjemsnavn",
+    "branche1",
+    "branche2",
+    "branche3",
+    "outbreak"
   ],
   "panels": [
     "tree",

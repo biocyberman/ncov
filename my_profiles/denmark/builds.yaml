@@ -10,12 +10,14 @@ builds:
     geographic_scale: country
     region: Europe
     country: Denmark
+    auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
 
   DenmarkGlobal:
     subsampling_scheme: denmark_global
     geographic_scale: country
     region: Europe
     country: Denmark
+    auspice_config: "my_profiles/denmark/auspice_config_global.json"
 
 
 subsampling:
@@ -87,6 +89,5 @@ subsampling:
         focus: "division"
 files:
   colors: "my_profiles/denmark/colors.tsv"
-  auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
   ordering: "my_profiles/denmark/color_ordering.tsv"
   lat_longs: "my_profiles/denmark/lat_longs.tsv"

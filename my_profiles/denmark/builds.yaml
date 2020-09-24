@@ -5,14 +5,14 @@
 # geographic scale the build focuses on. Together name and scale serve a look-up
 # in the geo_hierarchy to define region, country, division, etc
 builds:
-  DenmarkOnly:
+  Denmark:
     subsampling_scheme: denmark_only
     geographic_scale: country
     region: Europe
     country: Denmark
     auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
 
-  DenmarkGlobal:
+  Global:
     subsampling_scheme: denmark_global
     geographic_scale: country
     region: Europe

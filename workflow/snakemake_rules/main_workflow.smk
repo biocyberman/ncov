@@ -753,8 +753,8 @@ checkpoint resolve_clades:
         """
 
 def _get_subclades_file(wildcards):
-    # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'DenmarkOnly' else "results/DenmarkOnly/new_clades.tsv"
-    return checkpoints.resolve_clades.get(build_name = "DenmarkOnly").output.new_clades
+    # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'Denmark' else "results/Denmark/new_clades.tsv"
+    return checkpoints.resolve_clades.get(build_name = "Denmark").output.new_clades
 
 rule subclades:
     message: "Adding internal clade labels"

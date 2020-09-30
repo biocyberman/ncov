@@ -487,7 +487,9 @@ rule tree:
     output:
         tree = "results/{build_name}/tree_raw.nwk"
     params:
-        args = lambda w: config["tree"].get("tree-builder-args","") if "tree" in config else ""
+        args =  config["tree"].get("tree-builder-args","") if "tree" in config else "",
+        method = config['tree'].get("method", "iqtree") if "tree" in config else ""
+
     log:
         "logs/tree_{build_name}.txt"
     benchmark:
@@ -505,7 +507,8 @@ rule tree:
             --alignment {input.alignment} \
             --tree-builder-args {params.args} \
             --output {output.tree} \
-            --nthreads {threads} 2>&1 | tee {log}
+            --nthreads {threads} 2>&1 \
+            --method {params.method} | tee {log}
         """
 
 rule refine:

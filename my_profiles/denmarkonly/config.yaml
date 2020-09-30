@@ -31,4 +31,4 @@ latency-wait: 60
 # Set the number of threads (cores, actually) that the tree rule or other rules
 # should use on the cluster. These settings override the hardcoded values in the
 # Snakemake rules.
-set-threads: tree=16
+set-threads: tree=80

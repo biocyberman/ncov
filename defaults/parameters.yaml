@@ -64,7 +64,15 @@ mask:
   mask_sites: "13402 24389 24390"
 
 tree:
-  tree-builder-args: "'-ninit 10 -n 4'"
+  method: "iqtree"
+  tree-builder-args: "'-ninit 10'"
+  # tree-builder-args: "'-ninit 10 -B 1000 -bnni'"
+
+  # method: "fasttree"
+  # tree-builder-args: "'-nopr'"
+
+  # method: "raxml"
+  # tree-builder-args: "'-# 100'"
 
 # TreeTime settings
 refine:

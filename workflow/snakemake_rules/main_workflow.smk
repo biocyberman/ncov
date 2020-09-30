@@ -677,10 +677,30 @@ rule clades:
             --output-node-data {output.clade_data} 2>&1 | tee {log}
         """
 
+rule pangolin_clade:
+    message: "Running pangolin 2, local clade calculation"
+    input:
+        alignment = rules.combine_samples.output.alignment
+    output:
+        clades = "results/{build_name}/lineage_report.csv"
+    threads: 60
+    params:
+        tmpdir = "results/{build_name}/pangtmp"
+    shell:
+        """
+       bash -c "
+        source activate pangolin
+        pangolin {input.alignment} -t {threads} \
+        --tempdir {params.tmpdir} \
+        --outfile {output.clades}
+        rm -rf {params.tmpdir}
+        "
+        """
 rule pangolin:
     message: "Adding internal clade labels"
     input:
         tree = rules.refine.output.tree,
+        clades = rules.pangolin_clade.output.clades
     output:
         clade_data = "results/{build_name}/pangolin.json"
     log:
@@ -689,6 +709,7 @@ rule pangolin:
     shell:
         """
         python3 scripts/add_pangolin_lineages.py \
+            --clades {input.clades} \
             --tree {input.tree} \
             --output {output.clade_data}
         """
@@ -924,6 +945,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.rename_legacy_clades.output.clade_data,
         rules.rename_subclades.output.clade_data,
         rules.clades.output.clade_data,
+        rules.pangolin.output.clade_data,
         rules.recency.output.node_data,
         rules.traits.output.node_data
     ]
@@ -931,6 +953,20 @@ def _get_node_data_by_wildcards(wildcards):
     # Convert input files from wildcard strings to real file names.
     inputs = [input_file.format(**wildcards_dict) for input_file in inputs]
     return inputs
+rule update_description:
+    message: "Prepare description file(s)"
+    input:
+        description = lambda w: config["builds"][w.build_name]["description"] if "description" in config["builds"][w.build_name] else config["files"]["description"]
+    params:
+        data_date = config["data_date"],
+        gisaid_date = config["gisaid_date"]
+    output:
+        description = "results/{build_name}/description.md"
+    conda: config["conda_environment"]
+    shell:
+        """
+        sed -e 's/__DenmarkDate__/{params.data_date}/;s/__GisaidDate__/{params.gisaid_date}/' {input.description} > {output.description}
+        """
 
 rule export:
     message: "Exporting data files for for auspice"

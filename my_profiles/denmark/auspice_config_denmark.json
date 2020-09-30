@@ -233,6 +233,7 @@
   },
   "filters": [
     "division",
+    "pangolin_lineage",
     "subclade_membership",
     "location",
     "recency",

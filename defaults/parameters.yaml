@@ -10,6 +10,10 @@ conda_environment: "../envs/nextstrain.yaml"
 sequences: "data/sequences.fasta"
 metadata: "data/metadata.tsv"
 
+# These two variables are to be set at runtime
+gisaid_date: "undefined"
+data_date: "undefined"
+
 reference_node_name: "USA/WA1/2020"
 
 # Define files used for external configuration. Common examples consist of a

@@ -5,20 +5,13 @@ import io
 import pandas as pd
 from Bio import Phylo
 
-URL = "https://raw.githubusercontent.com/hCoV-2019/lineages/master/lineages/data/lineages.metadata.csv"
-def get_pangolin_lineages():
-    r  = requests.get(URL)
-    if not r.ok:
-        print(f"Failed to fetch {URL}", file=sys.stderr)
-        exit(1)
-        r.close()
-
-    d = pd.read_csv(io.StringIO(r.text))
+def get_pangolin_lineages(clades):
+    d = pd.read_csv(clades)
     lineages = {}
     for ri, row in d.iterrows():
         if row['lineage']:
-            lineages[row['name']] = row['lineage']
-            lineages[row['name'].replace('_', '')] = row['lineage']
+            lineages[row['taxon']] = row['lineage']
+            lineages[row['taxon'].replace('_', '')] = row['lineage']
     return lineages
 
 if __name__ == '__main__':
@@ -29,9 +22,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--tree', type=str, required=True, help="tree file")
     parser.add_argument('--output', type=str, metavar="JSON", required=True, help="output Auspice JSON")
+    parser.add_argument('--clades', type=str, required=True, help="CSV output clades file from pangolin/pangolearn")
     args = parser.parse_args()
 
-    lineages =get_pangolin_lineages()
+    lineages =get_pangolin_lineages(args.clades)
 
     T = Phylo.read(args.tree, 'newick')
     node_data = {}

@@ -59,3 +59,4 @@ files:
   auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
   ordering: "my_profiles/denmark/color_ordering.tsv"
   lat_longs: "my_profiles/denmark/lat_longs.tsv"
+  description: "my_profiles/denmark/description.md"

@@ -31,7 +31,9 @@ user_subsampling = copy.deepcopy(config.get("subsampling", {}))
 configfile: "defaults/parameters.yaml"
 validate(config, schema="workflow/schemas/config.schema.yaml")
 
-outdir= config['outdir'] if "outdir" in config else "results"
+outdir = config['outdir'] if "outdir" in config else "results"
+out_auspice = config['out_auspice'] if "out_auspice" in config else "auspice"
+
 
 # Check for overlapping subsampling schemes in user and default
 # configurations. For now, issue a deprecation warning, so users know they
@@ -83,8 +85,8 @@ rule all:
 rule clean:
     message: "Removing directories: {params}"
     params:
-        "results ",
-        "auspice"
+        outdir,
+        out_auspice
     shell:
         "rm -rfv {params}"
 

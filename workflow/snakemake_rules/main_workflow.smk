@@ -762,8 +762,9 @@ checkpoint resolve_clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = config["files"]["clades"]
     output:
-        clade_data = "results/{build_name}/clades_resolve.json",
-        new_clades = "results/{build_name}/new_clades.tsv"
+        clade_data = outdir + "/{build_name}/clades_resolve.json",
+        tip_cluster = outdir + "/{build_name}/tip_cluster.json",
+        new_clades = outdir + "/{build_name}/new_clades.tsv"
     log:
         "logs/clades_resolve_{build_name}.txt"
     conda: config["conda_environment"]
@@ -774,6 +775,7 @@ checkpoint resolve_clades:
             --clades {input.clades} \
             --new-clades {output.new_clades} \
             --max-depth 3 \
+            --output-tip-cluster {output.tip_cluster} \
             --output-node-data {output.clade_data} 2>&1 | tee {log}
         """
 

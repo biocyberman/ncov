@@ -941,6 +941,7 @@ def _get_node_data_by_wildcards(wildcards):
     """
     # Define inputs shared by all builds.
     wildcards_dict = dict(wildcards)
+    # rules.pangolin.output.clade_data,
     inputs = [
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,

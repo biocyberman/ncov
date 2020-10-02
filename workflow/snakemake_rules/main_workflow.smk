@@ -25,7 +25,7 @@ rule filter:
         include = config["files"]["include"],
         exclude = config["files"]["exclude"]
     output:
-        sequences = "results/filtered.fasta"
+        sequences = f"{outdir}/filtered.fasta"
     log:
         "logs/filtered.txt"
     params:
@@ -58,7 +58,7 @@ rule excluded_sequences:
         metadata = rules.download.output.metadata,
         include = config["files"]["exclude"]
     output:
-        sequences = "results/excluded.fasta"
+        sequences = f"{outdir}/excluded.fasta"
     log:
         "logs/excluded.txt"
     conda: config["conda_environment"]
@@ -82,7 +82,7 @@ rule align_excluded:
         sequences = rules.excluded_sequences.output.sequences,
         reference = config["files"]["reference"]
     output:
-        alignment = "results/excluded_alignment.fasta"
+        alignment = f"{outdir}/excluded_alignment.fasta"
     log:
         "logs/align_excluded.txt"
     threads: 2
@@ -104,9 +104,9 @@ rule diagnose_excluded:
         metadata = rules.download.output.metadata,
         reference = config["files"]["reference"]
     output:
-        diagnostics = "results/excluded-sequence-diagnostics.tsv",
-        flagged = "results/excluded-flagged-sequences.tsv",
-        to_exclude = "results/check_exclusion.txt"
+        diagnostics = f"{outdir}/excluded-sequence-diagnostics.tsv",
+        flagged = f"{outdir}/excluded-flagged-sequences.tsv",
+        to_exclude = f"{outdir}/check_exclusion.txt"
     log:
         "logs/diagnose-excluded.txt"
     params:
@@ -131,7 +131,7 @@ checkpoint partition_sequences:
     input:
         sequences = rules.filter.output.sequences
     output:
-        split_sequences = directory("results/split_sequences/")
+        split_sequences = directory(f"{outdir}/split_sequences/")
     log:
         "logs/partition_sequences.txt"
     params:
@@ -153,10 +153,10 @@ rule align:
         Cluster:  {wildcards.cluster}
         """
     input:
-        sequences = "results/split_sequences/{cluster}.fasta",
+        sequences = outdir + "/split_sequences/"+"{cluster}.fasta",
         reference = config["files"]["reference"]
     output:
-        alignment = "results/split_alignments/{cluster}.fasta"
+        alignment = outdir + "/split_alignments/"+"{cluster}.fasta"
     log:
         "logs/align_{cluster}.txt"
     benchmark:
@@ -175,7 +175,7 @@ rule align:
 
 def _get_alignments(wildcards):
     checkpoint_output = checkpoints.partition_sequences.get(**wildcards).output[0]
-    return expand("results/split_alignments/{i}.fasta",
+    return expand(outdir + "/split_alignments/{i}.fasta",
                   i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i)
 
 rule aggregate_alignments:
@@ -183,7 +183,7 @@ rule aggregate_alignments:
     input:
         alignments = _get_alignments
     output:
-        alignment = "results/aligned.fasta"
+        alignment = f"{outdir}/aligned.fasta"
     log:
         "logs/aggregate_alignments.txt"
     conda: config["conda_environment"]
@@ -199,9 +199,9 @@ rule diagnostic:
         metadata = rules.download.output.metadata,
         reference = config["files"]["reference"]
     output:
-        diagnostics = "results/sequence-diagnostics.tsv",
-        flagged = "results/flagged-sequences.tsv",
-        to_exclude = "results/to-exclude.txt"
+        diagnostics = f"{outdir}/sequence-diagnostics.tsv",
+        flagged = f"{outdir}/flagged-sequences.tsv",
+        to_exclude = f"{outdir}/to-exclude.txt"
     log:
         "logs/diagnostics.txt"
     params:
@@ -231,7 +231,7 @@ rule refilter:
         metadata = rules.download.output.metadata,
         exclude = rules.diagnostic.output.to_exclude
     output:
-        sequences = "results/aligned-filtered.fasta"
+        sequences = f"{outdir}/aligned-filtered.fasta"
     log:
         "logs/refiltered.txt"
     conda: config["conda_environment"]
@@ -256,7 +256,7 @@ rule mask:
     input:
         alignment = rules.refilter.output.sequences
     output:
-        alignment = "results/masked.fasta"
+        alignment = f"{outdir}/masked.fasta"
     log:
         "logs/mask.txt"
     params:
@@ -305,7 +305,7 @@ def get_priorities(wildcards):
     subsampling_settings = _get_subsampling_settings(wildcards)
 
     if "priorities" in subsampling_settings and subsampling_settings["priorities"]["type"] == "proximity":
-        return f"results/{wildcards.build_name}/proximity_{subsampling_settings['priorities']['focus']}.tsv"
+        return outdir + "/{wildcards.build_name}/proximity_{subsampling_settings['priorities']['focus']}.tsv"
     else:
         # TODO: find a way to make the list of input files depend on config
         return config["files"]["include"]
@@ -373,7 +373,7 @@ rule subsample:
         include = config["files"]["include"],
         priorities = get_priorities
     output:
-        sequences = "results/{build_name}/sample-{subsample}.fasta"
+        sequences = outdir + "/{build_name}/sample-{subsample}.fasta"
     params:
         group_by = _get_specific_subsampling_setting("group_by"),
         sequences_per_group = _get_specific_subsampling_setting("seq_per_group", optional=True),
@@ -413,9 +413,9 @@ rule proximity_score:
         alignment = rules.mask.output.alignment,
         metadata = rules.download.output.metadata,
         reference = config["files"]["reference"],
-        focal_alignment = "results/{build_name}/sample-{focus}.fasta"
+        focal_alignment = outdir + "/{build_name}/sample-{focus}.fasta"
     output:
-        priorities = "results/{build_name}/proximity_{focus}.tsv"
+        priorities = outdir + "/{build_name}/proximity_{focus}.tsv"
     log:
         "logs/subsampling_priorities_{build_name}_{focus}.txt"
     resources:
@@ -434,7 +434,7 @@ def _get_subsampled_files(wildcards):
     subsampling_settings = _get_subsampling_settings(wildcards)
 
     return [
-        f"results/{wildcards.build_name}/sample-{subsample}.fasta"
+        f"{outdir}/{wildcards.build_name}/sample-{subsample}.fasta"
         for subsample in subsampling_settings
     ]
 
@@ -446,7 +446,7 @@ rule combine_samples:
     input:
         _get_subsampled_files
     output:
-        alignment = "results/{build_name}/subsampled_alignment.fasta"
+        alignment = outdir + "/{build_name}/subsampled_alignment.fasta"
     log:
         "logs/subsample_regions_{build_name}.txt"
     conda: config["conda_environment"]
@@ -466,7 +466,7 @@ rule adjust_metadata_regions:
     input:
         metadata = rules.download.output.metadata
     output:
-        metadata = "results/{build_name}/metadata_adjusted.tsv"
+        metadata = outdir + "/{build_name}/metadata_adjusted.tsv"
     params:
         region = lambda wildcards: config["builds"][wildcards.build_name]["region"]
     log:
@@ -485,7 +485,7 @@ rule tree:
     input:
         alignment = rules.combine_samples.output.alignment
     output:
-        tree = "results/{build_name}/tree_raw.nwk"
+        tree = outdir + "/{build_name}/tree_raw.nwk"
     params:
         args =  config["tree"].get("tree-builder-args","") if "tree" in config else "",
         method = config['tree'].get("method", "iqtree") if "tree" in config else ""
@@ -524,8 +524,8 @@ rule refine:
         alignment = rules.combine_samples.output.alignment,
         metadata = _get_metadata_by_wildcards
     output:
-        tree = "results/{build_name}/tree.nwk",
-        node_data = "results/{build_name}/branch_lengths.json"
+        tree = outdir + "/{build_name}/tree.nwk",
+        node_data = outdir + "/{build_name}/branch_lengths.json"
     log:
         "logs/refine_{build_name}.txt"
     benchmark:
@@ -576,7 +576,7 @@ rule ancestral:
         tree = rules.refine.output.tree,
         alignment = rules.combine_samples.output.alignment
     output:
-        node_data = "results/{build_name}/nt_muts.json"
+        node_data = outdir + "/{build_name}/nt_muts.json"
     log:
         "logs/ancestral_{build_name}.txt"
     params:
@@ -597,7 +597,7 @@ rule haplotype_status:
     input:
         nt_muts = rules.ancestral.output.node_data
     output:
-        node_data = "results/{build_name}/haplotype_status.json"
+        node_data = outdir + "/{build_name}/haplotype_status.json"
     log:
         "logs/haplotype_status_{build_name}.txt"
     params:
@@ -618,7 +618,7 @@ rule translate:
         node_data = rules.ancestral.output.node_data,
         reference = config["files"]["reference"]
     output:
-        node_data = "results/{build_name}/aa_muts.json"
+        node_data = outdir + "/{build_name}/aa_muts.json"
     log:
         "logs/translate_{build_name}.txt"
     conda: config["conda_environment"]
@@ -641,7 +641,7 @@ rule traits:
         tree = rules.refine.output.tree,
         metadata = _get_metadata_by_wildcards
     output:
-        node_data = "results/{build_name}/traits.json"
+        node_data = outdir + "/{build_name}/traits.json"
     log:
         "logs/traits_{build_name}.txt"
     params:
@@ -667,7 +667,7 @@ rule clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = config["files"]["clades"]
     output:
-        clade_data = "results/{build_name}/clades.json"
+        clade_data = outdir + "/{build_name}/clades.json"
     log:
         "logs/clades_{build_name}.txt"
     conda: config["conda_environment"]
@@ -684,10 +684,10 @@ rule pangolin_clade:
     input:
         alignment = rules.combine_samples.output.alignment
     output:
-        clades = "results/{build_name}/lineage_report.csv"
+        clades = outdir + "/{build_name}/lineage_report.csv"
     threads: 60
     params:
-        tmpdir = "results/{build_name}/pangtmp"
+        tmpdir = outdir + "/{build_name}/pangtmp"
     shell:
         """
        bash -c "
@@ -704,7 +704,7 @@ rule pangolin:
         tree = rules.refine.output.tree,
         clades = rules.pangolin_clade.output.clades
     output:
-        clade_data = "results/{build_name}/pangolin.json"
+        clade_data = outdir + "/{build_name}/pangolin.json"
     log:
         "logs/pangolin_{build_name}.txt"
     conda: config["conda_environment"]
@@ -725,7 +725,7 @@ rule legacy_clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = config["files"]["legacy_clades"]
     output:
-        clade_data = "results/{build_name}/temp_legacy_clades.json"
+        clade_data = outdir + "/{build_name}/temp_legacy_clades.json"
     log:
         "logs/legacy_clades_{build_name}.txt"
     conda: config["conda_environment"]
@@ -741,7 +741,7 @@ rule rename_legacy_clades:
     input:
         node_data = rules.legacy_clades.output.clade_data
     output:
-        clade_data = "results/{build_name}/legacy_clades.json"
+        clade_data = outdir + "/{build_name}/legacy_clades.json"
     run:
         import json
         with open(input.node_data, 'r', encoding='utf-8') as fh:
@@ -789,9 +789,9 @@ rule subclades:
         subclades = _get_subclades_file,
         clades = config["files"]["clades"]
     output:
-        clade_data = "results/{build_name}/temp_subclades.json"
+        clade_data = outdir + "/{build_name}/temp_subclades.json"
     params:
-        clade_file = "results/{build_name}/temp_subclades.tsv"
+        clade_file = outdir + "/{build_name}/temp_subclades.tsv"
     log:
         "logs/subclades_{build_name}.txt"
     conda: config["conda_environment"]
@@ -808,7 +808,7 @@ rule rename_subclades:
     input:
         node_data = rules.subclades.output.clade_data
     output:
-        clade_data = "results/{build_name}/subclades.json"
+        clade_data = outdir + "/{build_name}/subclades.json"
     run:
         import json
         with open(input.node_data, 'r', encoding='utf-8') as fh:
@@ -828,7 +828,7 @@ rule colors:
         color_schemes = config["files"]["color_schemes"],
         metadata = _get_metadata_by_wildcards
     output:
-        colors = "results/{build_name}/colors.tsv"
+        colors = outdir + "/{build_name}/colors.tsv"
     log:
         "logs/colors_{build_name}.txt"
     conda: config["conda_environment"]
@@ -846,7 +846,7 @@ rule recency:
     input:
         metadata = _get_metadata_by_wildcards
     output:
-        node_data = "results/{build_name}/recency.json"
+        node_data = outdir + "/{build_name}/recency.json"
     log:
         "logs/recency_{build_name}.txt"
     conda: config["conda_environment"]
@@ -863,7 +863,7 @@ rule tip_frequencies:
         tree = rules.refine.output.tree,
         metadata = _get_metadata_by_wildcards
     output:
-        tip_frequencies_json = "results/{build_name}/tip-frequencies.json"
+        tip_frequencies_json = outdir + "/{build_name}/tip-frequencies.json"
     log:
         "logs/tip_frequencies_{build_name}.txt"
     params:
@@ -891,7 +891,7 @@ rule nucleotide_mutation_frequencies:
         alignment = rules.combine_samples.output.alignment,
         metadata = _get_metadata_by_wildcards
     output:
-        frequencies = "results/{build_name}/nucleotide_mutation_frequencies.json"
+        frequencies = outdir + "/{build_name}/nucleotide_mutation_frequencies.json"
     log:
         "logs/nucleotide_mutation_frequencies_{build_name}.txt"
     params:
@@ -935,6 +935,11 @@ def export_title(wildcards):
         location_title = location_name.replace("-", " ").title()
         return f"Genomic epidemiology of novel coronavirus - {location_title}-focused subsampling"
 
+def _get_tip_cluster_file(wildcards):
+    # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'Denmark' else "results/Denmark/new_clades.tsv"
+    return checkpoints.resolve_clades.get(build_name = wildcards.build_name).output.tip_cluster
+
+
 def _get_node_data_by_wildcards(wildcards):
     """Return a list of node data files to include for a given build's wildcards.
     """
@@ -948,7 +953,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.rename_legacy_clades.output.clade_data,
         rules.rename_subclades.output.clade_data,
         rules.clades.output.clade_data,
-        rules.pangolin.output.clade_data,
+        _get_tip_cluster_file(wildcards),
         rules.recency.output.node_data,
         rules.traits.output.node_data
     ]
@@ -964,7 +969,7 @@ rule update_description:
         data_date = config["data_date"],
         gisaid_date = config["gisaid_date"]
     output:
-        description = "results/{build_name}/description.md"
+        description = outdir + "/{build_name}/description.md"
     conda: config["conda_environment"]
     shell:
         """
@@ -982,7 +987,7 @@ rule export:
         lat_longs = config["files"]["lat_longs"],
         description = rules.update_description.output.description
     output:
-        auspice_json = "results/{build_name}/ncov_with_accessions.json"
+        auspice_json = outdir + "/{build_name}/ncov_with_accessions.json"
     log:
         "logs/export_{build_name}.txt"
     params:
@@ -1013,7 +1018,7 @@ rule incorporate_travel_history:
         sampling = _get_sampling_trait_for_wildcards,
         exposure = _get_exposure_trait_for_wildcards
     output:
-        auspice_json = "results/{build_name}/ncov_with_accessions_and_travel_branches.json"
+        auspice_json = outdir + "/{build_name}/ncov_with_accessions_and_travel_branches.json"
     log:
         "logs/incorporate_travel_history_{build_name}.txt"
     conda: config["conda_environment"]
@@ -1034,8 +1039,8 @@ rule finalize:
         auspice_json = rules.incorporate_travel_history.output.auspice_json,
         frequencies = rules.tip_frequencies.output.tip_frequencies_json
     output:
-        auspice_json = "auspice/ncov_{build_name}.json",
-        tip_frequency_json = "auspice/ncov_{build_name}_tip-frequencies.json"
+        auspice_json = outdir + "/auspice/ncov_{build_name}.json",
+        tip_frequency_json = outdir + "/auspice/ncov_{build_name}_tip-frequencies.json"
     log:
         "logs/fix_colorings_{build_name}.txt"
     conda: config["conda_environment"]

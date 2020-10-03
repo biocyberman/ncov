@@ -1053,3 +1053,24 @@ rule finalize:
             --output {output.auspice_json} 2>&1 | tee {log} &&
         cp {input.frequencies} {output.tip_frequency_json}
         """
+
+checkpoint ncov_clade_assignment:
+    message: "Asign clades using nextstrain's asignment script"
+    input:
+        alignment = rules.mask.output.alignment,
+        subclades = _get_subclades_file
+    output:
+       clades = outdir + "/global_clade_assignment.tsv"
+    params:
+        clades = outdir + "/Denmark/temp_subclades.tsv"
+    log:
+    threads: 64
+    shell:
+        """
+        python3 scripts/assign_clades.py --nthreads {threads}  \
+        --alignment {input.alignment} \
+        --clades {params.clades} \
+        --chunk-size  48 \
+        --output {output.clades} 
+        """
+

@@ -1,6 +1,8 @@
 import copy
 from datetime import date
 from os import environ
+from os import path
+from os import getcwd
 from socket import getfqdn
 from getpass import getuser
 from snakemake.logging import logger
@@ -32,8 +34,11 @@ user_subsampling = copy.deepcopy(config.get("subsampling", {}))
 configfile: "defaults/parameters.yaml"
 validate(config, schema="workflow/schemas/config.schema.yaml")
 
+# Get output paths and convert them to relative paths
 outdir = config['outdir'] if "outdir" in config else "results"
+outdir = path.relpath(outdir, getcwd())
 out_auspice = config['out_auspice'] if "out_auspice" in config else "auspice"
+out_auspice = path.relpath(out_auspice, getcwd())
 
 
 # Check for overlapping subsampling schemes in user and default

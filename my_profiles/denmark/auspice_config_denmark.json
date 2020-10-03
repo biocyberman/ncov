@@ -21,11 +21,6 @@
       "type": "categorical"
     },
     {
-      "key": "tip_cluster",
-      "title": "Cluster",
-      "type": "categorical"
-    },
-{
       "key": "pangolin_lineage",
       "title": "Pangolin lineage",
       "type": "categorical"
@@ -238,9 +233,7 @@
   },
   "filters": [
     "division",
-    "pangolin_lineage",
     "subclade_membership",
-    "tip_cluster",
     "location",
     "recency",
     "country",

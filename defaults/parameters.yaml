@@ -65,7 +65,7 @@ mask:
 
 tree:
   method: "iqtree"
-  tree-builder-args: "'-ninit 10' -n 4"
+  tree-builder-args: "'-ninit 10 -n 4'"
   # tree-builder-args: "'-ninit 10 -B 1000 -bnni'"
 
   # method: "fasttree"

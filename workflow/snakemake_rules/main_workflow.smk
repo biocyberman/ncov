@@ -948,6 +948,7 @@ def _get_node_data_by_wildcards(wildcards):
     # Define inputs shared by all builds.
     wildcards_dict = dict(wildcards)
     # rules.pangolin.output.clade_data,
+    # _get_tip_cluster_file(wildcards),
     inputs = [
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
@@ -955,7 +956,6 @@ def _get_node_data_by_wildcards(wildcards):
         rules.rename_legacy_clades.output.clade_data,
         rules.rename_subclades.output.clade_data,
         rules.clades.output.clade_data,
-        _get_tip_cluster_file(wildcards),
         rules.recency.output.node_data,
         rules.traits.output.node_data
     ]

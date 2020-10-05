@@ -1058,19 +1058,20 @@ checkpoint ncov_clade_assignment:
     message: "Asign clades using nextstrain's asignment script"
     input:
         alignment = rules.mask.output.alignment,
-        subclades = _get_subclades_file
+        subclades = _get_subclades_file,
+        clades = config["files"]["clades"]
     output:
        clades = outdir + "/global_clade_assignment.tsv"
     params:
         clades = outdir + "/Denmark/temp_subclades.tsv"
-    log:
+    conda: config["conda_environment"]
     threads: 64
     shell:
         """
+        cat {input.clades} {input.subclades} > {params.clades} && \
         python3 scripts/assign_clades.py --nthreads {threads}  \
         --alignment {input.alignment} \
         --clades {params.clades} \
         --chunk-size  48 \
-        --output {output.clades} 
+        --output {output.clades}
         """
-

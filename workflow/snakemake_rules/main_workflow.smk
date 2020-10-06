@@ -762,15 +762,15 @@ checkpoint resolve_clades:
         clades = config["files"]["clades"],
         metadata = _get_metadata_by_wildcards
     output:
-        clade_data = outdir + "/{build_name}/clades_resolve.json",
+        clade_data = outdir + "/{build_name}/resolved_clades.json",
         tip_cluster = outdir + "/{build_name}/tip_cluster.json",
         new_clades = outdir + "/{build_name}/new_clades.tsv"
     log:
-        "logs/clades_resolve_{build_name}.txt"
+        "logs/resolve_clades_{build_name}.txt"
     conda: config["conda_environment"]
     shell:
         """
-        augur clades-resolve --tree {input.tree} \
+        augur resolve-clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
             --metadata {input.metadata} \

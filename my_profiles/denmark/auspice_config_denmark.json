@@ -1,6 +1,6 @@
 {
   "title": "Genomic epidemiology of novel coronavirus in Denmark",
-  "build_url": "https://github.com/nextstrain/ncov",
+  "build_url": "https://github.com/biocyberman/ncov/tree/aau",
   "maintainers": [
     {"name": "Emma Hodcroft, Richard Neher, Sarah Nadeau, Tanja Stadler, Vang Le-Quy", "url": "https://neherlab.org"}
   ],

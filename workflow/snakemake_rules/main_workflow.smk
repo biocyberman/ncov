@@ -939,10 +939,10 @@ def export_title(wildcards):
     if not location_name:
         return "Genomic epidemiology of novel coronavirus"
     elif location_name == "global":
-        return "Genomic epidemiology of novel coronavirus - Global subsampling"
+        return "Genomic epidemiology of novel coronavirus - Global"
     else:
         location_title = location_name.replace("-", " ").title()
-        return f"Genomic epidemiology of novel coronavirus - {location_title}-focused subsampling"
+        return f"Genomic epidemiology of novel coronavirus - {location_title}"
 
 def _get_tip_cluster_file(wildcards):
     # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'Denmark' else "results/Denmark/new_clades.tsv"

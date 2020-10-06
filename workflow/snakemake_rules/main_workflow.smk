@@ -761,7 +761,9 @@ checkpoint resolve_clades:
         aa_muts = rules.translate.output.node_data,
         nuc_muts = rules.ancestral.output.node_data,
         clades = config["files"]["clades"],
-        metadata = _get_metadata_by_wildcards
+        metadata = _get_metadata_by_wildcards,
+        reference = config["files"]["reference"],
+        alignment = rules.combine_samples.output.alignment
     output:
         clade_data = outdir + "/{build_name}/resolved_clades.json",
         tip_cluster = outdir + "/{build_name}/tip_cluster.json",
@@ -774,6 +776,8 @@ checkpoint resolve_clades:
         augur resolve-clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
+            --alignment {input.alignment} \
+            --reference {input.reference} \
             --metadata {input.metadata} \
             --new-clades {output.new_clades} \
             --max-depth 3 \

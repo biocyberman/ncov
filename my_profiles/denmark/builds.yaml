@@ -91,4 +91,4 @@ files:
   colors: "my_profiles/denmark/colors.tsv"
   ordering: "my_profiles/denmark/color_ordering.tsv"
   lat_longs: "my_profiles/denmark/lat_longs.tsv"
-	description: "my_profiles/denmark/description.md"
+  description: "my_profiles/denmark/description.md"

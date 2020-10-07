@@ -305,7 +305,7 @@ def get_priorities(wildcards):
     subsampling_settings = _get_subsampling_settings(wildcards)
 
     if "priorities" in subsampling_settings and subsampling_settings["priorities"]["type"] == "proximity":
-        return outdir + "/{wildcards.build_name}/proximity_{subsampling_settings['priorities']['focus']}.tsv"
+        return outdir + f"/{wildcards.build_name}/proximity_{subsampling_settings['priorities']['focus']}.tsv"
     else:
         # TODO: find a way to make the list of input files depend on config
         return config["files"]["include"]

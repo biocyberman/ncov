@@ -260,6 +260,7 @@
     "Occupation",
     "ReportAgeGrp",
     "CodR_Death30Days",
+    "CPR",
     "CPR_Death30Days",
     "DateOfDeath_final",
     "Death60Days_final",

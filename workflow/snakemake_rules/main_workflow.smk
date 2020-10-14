@@ -1067,9 +1067,12 @@ rule incorporate_travel_history:
 rule finalize:
     message: "Remove extraneous colorings for main build and move frequencies"
     input:
+        # Would probably need to return the original genome, not these masked and aligned ones
+        genomes = rules.combine_samples.output.alignment,
         auspice_json = rules.incorporate_travel_history.output.auspice_json,
         frequencies = rules.tip_frequencies.output.tip_frequencies_json
     output:
+        genomes = out_auspice + "/ncov_{build_name}.fasta",
         auspice_json = out_auspice + "/ncov_{build_name}.json",
         tip_frequency_json = out_auspice + "/ncov_{build_name}_tip-frequencies.json"
     log:
@@ -1081,6 +1084,8 @@ rule finalize:
             --input {input.auspice_json} \
             --output {output.auspice_json} 2>&1 | tee {log} &&
         cp {input.frequencies} {output.tip_frequency_json}
+        # Copy genomes to enable genome download feature by default
+        cp {input.genomes} {output.genomes} 
         """
 
 checkpoint ncov_clade_assignment:

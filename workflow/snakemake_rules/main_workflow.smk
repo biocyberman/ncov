@@ -17,20 +17,16 @@ rule prepare_input:
     input:
         denmark_fasta = config["denmark_fasta"],
         denmark_meta = config["denmark_meta"],
-        gisaid_fasta = config["gisaid_fasta"],
-        gisaid_meta = config["gisaid_meta"]
     output:
-        metadata = f"{merged_data}/metadata_nextstrain.tsv",
-        sequences = f"{merged_data}/merged_sequences.fasta"
+        metadata = f"{merged_data}/{Path(config['denmark_meta']).name}",
+        sequences = f"{merged_data}/{Path(config['denmark_fasta']).name}"
     conda: config["conda_environment"]
     params:
         mergedir = merged_data
     shell:
         """
-        Rscript --vanilla --no-environ /opt/workflows/merge_clean_metadata.R -l {input.denmark_meta} -g {input.gisaid_meta} -o {params.mergedir}
-        awk 'NR > 1 {{print $1}}' {params.mergedir}/metadata_nextstrain.tsv |sort|uniq > {params.mergedir}/include.txt
-        # Dedup fasta: https://www.biostars.org/p/143617/#466790
-        cat {input.denmark_fasta} {input.gisaid_fasta}|awk '/^>/{{f=!d[$1];d[$1]=1}}f' | seqtk subseq - {params.mergedir}/include.txt > {output.sequences}
+        cp {input.denmark_meta} {output.metadata}
+        cp {input.denmark_fasta} {output.sequences}
 
         """
 from datetime import date
@@ -690,7 +686,7 @@ rule clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = config["files"]["clades"]
     output:
-        clade_data = outdir + "/{build_name}/clades.json"
+        ncov_clade = outdir + "/{build_name}/clades.json"
     log:
         "logs/clades_{build_name}.txt"
     conda: config["conda_environment"]
@@ -699,7 +695,7 @@ rule clades:
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data {output.clade_data} 2>&1 | tee {log}
+            --output-node-data {output.ncov_clade} 2>&1 | tee {log}
         """
 
 rule pangolin_clade:
@@ -727,7 +723,7 @@ rule pangolin:
         tree = rules.refine.output.tree,
         clades = rules.pangolin_clade.output.clades
     output:
-        clade_data = outdir + "/{build_name}/pangolin.json"
+        ncov_clade = outdir + "/{build_name}/pangolin.json"
     log:
         "logs/pangolin_{build_name}.txt"
     conda: config["conda_environment"]
@@ -736,7 +732,7 @@ rule pangolin:
         python3 scripts/add_pangolin_lineages.py \
             --clades {input.clades} \
             --tree {input.tree} \
-            --output {output.clade_data}
+            --output {output.ncov_clade}
         """
 
 
@@ -748,7 +744,7 @@ rule legacy_clades:
         nuc_muts = rules.ancestral.output.node_data,
         clades = config["files"]["legacy_clades"]
     output:
-        clade_data = outdir + "/{build_name}/temp_legacy_clades.json"
+        ncov_clade = outdir + "/{build_name}/temp_legacy_clades.json"
     log:
         "logs/legacy_clades_{build_name}.txt"
     conda: config["conda_environment"]
@@ -757,14 +753,14 @@ rule legacy_clades:
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {input.clades} \
-            --output-node-data {output.clade_data} 2>&1 | tee {log}
+            --output-node-data {output.ncov_clade} 2>&1 | tee {log}
         """
 
 rule rename_legacy_clades:
     input:
-        node_data = rules.legacy_clades.output.clade_data
+        node_data = rules.legacy_clades.output.ncov_clade
     output:
-        clade_data = outdir + "/{build_name}/legacy_clades.json"
+        ncov_clade = outdir + "/{build_name}/legacy_clades.json"
     run:
         import json
         with open(input.node_data, 'r', encoding='utf-8') as fh:
@@ -773,10 +769,10 @@ rule rename_legacy_clades:
             for k,v in d['nodes'].items():
                 if "clade_membership" in v:
                     new_data[k] = {"legacy_clade_membership": v["clade_membership"]}
-        with open(output.clade_data, "w") as fh:
+        with open(output.ncov_clade, "w") as fh:
             json.dump({"nodes":new_data}, fh)
 
-checkpoint resolve_clades:
+rule resolve_clades:
     message: "Resolve subclades "
     input:
         tree = rules.refine.output.tree,
@@ -787,7 +783,7 @@ checkpoint resolve_clades:
         reference = config["files"]["reference"],
         alignment = rules.combine_samples.output.alignment
     output:
-        clade_data = outdir + "/{build_name}/resolved_clades.json",
+        aau_clade = outdir + "/{build_name}/resolved_clades.json",
         tip_cluster = outdir + "/{build_name}/tip_cluster.json",
         new_clades = outdir + "/{build_name}/new_clades.tsv"
     log:
@@ -804,12 +800,12 @@ checkpoint resolve_clades:
             --new-clades {output.new_clades} \
             --max-depth 3 \
             --output-tip-cluster {output.tip_cluster} \
-            --output-node-data {output.clade_data} 2>&1 | tee {log}
+            --output-node-data {output.aau_clade} 2>&1 | tee {log}
         """
 
 def _get_subclades_file(wildcards):
     # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'Denmark' else "results/Denmark/new_clades.tsv"
-    return checkpoints.resolve_clades.get(build_name = "Denmark").output.new_clades
+    return checkpoints.resolve_clades.get(wildcards.build_name).output.new_clades
 
 rule subclades:
     message: "Adding internal clade labels"
@@ -817,10 +813,10 @@ rule subclades:
         tree = rules.refine.output.tree,
         aa_muts = rules.translate.output.node_data,
         nuc_muts = rules.ancestral.output.node_data,
-        subclades = _get_subclades_file,
+        subclades = config['files']['subclades'],
         clades = config["files"]["clades"]
     output:
-        clade_data = outdir + "/{build_name}/temp_subclades.json"
+        ncov_clade = outdir + "/{build_name}/temp_subclades.json"
     params:
         clade_file = outdir + "/{build_name}/temp_subclades.tsv"
     log:
@@ -832,14 +828,14 @@ rule subclades:
         augur clades --tree {input.tree} \
             --mutations {input.nuc_muts} {input.aa_muts} \
             --clades {params.clade_file} \
-            --output-node-data {output.clade_data} 2>&1 | tee {log}
+            --output-node-data {output.ncov_clade} 2>&1 | tee {log}
         """
 
 rule rename_subclades:
     input:
-        node_data = rules.subclades.output.clade_data
+        node_data = rules.subclades.output.ncov_clade
     output:
-        clade_data = outdir + "/{build_name}/subclades.json"
+        ncov_clade = outdir + "/{build_name}/subclades.json"
     run:
         import json
         with open(input.node_data, 'r', encoding='utf-8') as fh:
@@ -848,7 +844,7 @@ rule rename_subclades:
             for k,v in d['nodes'].items():
                 if "clade_membership" in v:
                     new_data[k] = {"subclade_membership": v["clade_membership"]}
-        with open(output.clade_data, "w") as fh:
+        with open(output.ncov_clade, "w") as fh:
             json.dump({"nodes":new_data}, fh)
 
 
@@ -982,9 +978,9 @@ def _get_node_data_by_wildcards(wildcards):
         rules.refine.output.node_data,
         rules.ancestral.output.node_data,
         rules.translate.output.node_data,
-        rules.rename_legacy_clades.output.clade_data,
-        rules.rename_subclades.output.clade_data,
-        rules.clades.output.clade_data,
+        rules.rename_legacy_clades.output.ncov_clade,
+        rules.rename_subclades.output.ncov_clade,
+        rules.clades.output.ncov_clade,
         rules.recency.output.node_data,
         rules.traits.output.node_data
     ]
@@ -998,13 +994,12 @@ rule update_description:
         description = lambda w: config["builds"][w.build_name]["description"] if "description" in config["builds"][w.build_name] else config["files"]["description"]
     params:
         data_date = config["data_date"],
-        gisaid_date = config["gisaid_date"]
     output:
         description = outdir + "/{build_name}/description.md"
     conda: config["conda_environment"]
     shell:
         """
-        sed -e 's/__DenmarkDate__/{params.data_date}/;s/__GisaidDate__/{params.gisaid_date}/' {input.description} > {output.description}
+        sed -e 's/__DenmarkDate__/{params.data_date}/' {input.description} > {output.description}
         """
 
 rule export:
@@ -1092,12 +1087,12 @@ checkpoint ncov_clade_assignment:
     message: "Asign clades using nextstrain's asignment script"
     input:
         alignment = rules.mask.output.alignment,
-        subclades = _get_subclades_file,
+        subclades = rules.rename_subclades.output.ncov_clade,
         clades = config["files"]["clades"]
     output:
-       clades = outdir + "/global_clade_assignment.tsv"
+       clades = outdir + "/{build_name}/nextstrain_clade_assignment.tsv"
     params:
-        clades = outdir + "/Denmark/temp_subclades.tsv"
+        clades = outdir + "/{build_name}/ncov_subclades.tsv"
     conda: config["conda_environment"]
     threads: 64
     shell:

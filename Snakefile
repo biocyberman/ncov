@@ -87,7 +87,7 @@ rule all:
     input:
         auspice_json = expand(out_auspice + "/ncov_{build_name}.json", build_name=BUILD_NAMES),
         tip_frequency_json = expand(out_auspice + "/ncov_{build_name}_tip-frequencies.json", build_name=BUILD_NAMES),
-        global_clade_assignment = outdir + "/global_clade_assignment.tsv"
+        global_clade_assignment = expand(outdir + "/{build_name}/nextstrain_clade_assignment.tsv", build_name=BUILD_NAMES)
 
 rule clean:
     message: "Removing directories: {params}"

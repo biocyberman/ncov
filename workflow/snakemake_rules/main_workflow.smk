@@ -787,7 +787,7 @@ rule resolve_clades:
         reference = config["files"]["reference"],
         alignment = rules.combine_samples.output.alignment
     output:
-        aau_clade = outdir + "/{build_name}/resolved_clades.json",
+        clades_dk = outdir + "/{build_name}/resolved_clades.json",
         tip_cluster = outdir + "/{build_name}/tip_cluster.json",
         new_clades = outdir + "/{build_name}/new_clades.tsv"
     log:
@@ -804,12 +804,8 @@ rule resolve_clades:
             --new-clades {output.new_clades} \
             --max-depth 3 \
             --output-tip-cluster {output.tip_cluster} \
-            --output-node-data {output.aau_clade} 2>&1 | tee {log}
+            --output-node-data {output.clades_dk} 2>&1 | tee {log}
         """
-
-def _get_subclades_file(wildcards):
-    # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'Denmark' else "results/Denmark/new_clades.tsv"
-    return checkpoints.resolve_clades.get(wildcards.build_name).output.new_clades
 
 rule subclades:
     message: "Adding internal clade labels"
@@ -834,6 +830,22 @@ rule subclades:
             --clades {params.clade_file} \
             --output-node-data {output.ncov_clade} 2>&1 | tee {log}
         """
+
+rule rename_subclades_dk:
+    input:
+        clades_dk = rules.resolve_clades.output.clades_dk
+    output:
+        clades_dk = outdir + "/{build_name}/subclades_dk.json"
+    run:
+        import json
+        with open(input.clades_dk, 'r', encoding='utf-8') as fh:
+            d = json.load(fh)
+            new_data = {}
+            for k,v in d['nodes'].items():
+                if "clade_membership" in v:
+                    new_data[k] = {"subclade_dk": v["clade_membership"]}
+        with open(output.clades_dk, "w") as fh:
+            json.dump({"nodes":new_data}, fh, indent=2)
 
 rule rename_subclades:
     input:
@@ -985,6 +997,7 @@ def _get_node_data_by_wildcards(wildcards):
         rules.rename_legacy_clades.output.ncov_clade,
         rules.rename_subclades.output.ncov_clade,
         rules.clades.output.ncov_clade,
+        rules.rename_subclades_dk.output.clades_dk,
         rules.recency.output.node_data,
         rules.traits.output.node_data
     ]

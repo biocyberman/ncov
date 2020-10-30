@@ -5,32 +5,39 @@
 # geographic scale the build focuses on. Together name and scale serve a look-up
 # in the geo_hierarchy to define region, country, division, etc
 builds:
-  Denmark:
-    subsampling_scheme: denmark_only
+  Denmark_Light:
+    subsampling_scheme: denmark_light
     geographic_scale: country
     region: Europe
     country: Denmark
     auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
 
-  Global:
-    subsampling_scheme: denmark_global
+  Denmark_Full:
+    subsampling_scheme: denmark_full
     geographic_scale: country
     region: Europe
     country: Denmark
-    auspice_config: "my_profiles/denmark/auspice_config_global.json"
+    auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
 
 
 subsampling:
   # Default subsampling logic for countries
-  denmark_only:
+  denmark_light:
     # Focal samples for country
-    country:
+    last_month:
       group_by: "division year month"
       seq_per_group: 9000
       exclude: "--exclude-where 'country!={country}'"
+      min_date: numeric_date(date.today() - timedelta(days=30))
     # Contextual samples from country's region
+    earlier:
+      group_by: "division year month"
+      seq_per_group: 20
+      exclude: "--exclude-where 'country!={country}'"
+      max_date: numeric_date(date.today() - timedelta(days=30))
+
     
-  denmark_global:
+  denmark_full:
     # Focal samples for country
     country:
       group_by: "division year month"

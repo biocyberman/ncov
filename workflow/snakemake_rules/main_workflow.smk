@@ -17,6 +17,7 @@ rule prepare_input:
     input:
         denmark_fasta = config["denmark_fasta"],
         denmark_meta = config["denmark_meta"],
+        rootseqs = "my_profiles/denmark/rootseqs.fasta"
     output:
         metadata = f"{merged_data}/{Path(config['denmark_meta']).name}",
         sequences = f"{merged_data}/{Path(config['denmark_fasta']).name}"
@@ -26,10 +27,10 @@ rule prepare_input:
     shell:
         """
         cp {input.denmark_meta} {output.metadata}
-        cp {input.denmark_fasta} {output.sequences}
+        cat {input.denmark_fasta} {input.rootseqs} > {output.sequences}
 
         """
-from datetime import date
+from datetime import date, timedelta
 from treetime.utils import numeric_date
 
 rule filter:
@@ -350,6 +351,9 @@ def _get_specific_subsampling_setting(setting, optional=False):
             # Load build attributes including geographic details about the
             # build's region, country, division, etc. as needed for subsampling.
             build = config["builds"][wildcards.build_name]
+            if (setting == "min_date" or setting == "max_date") and value:
+                value = eval(value)
+                return f"--{setting.replace('_', '-')} {value}"
             value = value.format(**build)
         elif value is not None:
             # If is 'seq_per_group' or 'max_sequences' build subsampling setting,
@@ -982,7 +986,6 @@ def _get_tip_cluster_file(wildcards):
     # return rules.resolve_clades.output.new_clades if wildcards.build_name == 'Denmark' else "results/Denmark/new_clades.tsv"
     return checkpoints.resolve_clades.get(build_name = wildcards.build_name).output.tip_cluster
 
-
 def _get_node_data_by_wildcards(wildcards):
     """Return a list of node data files to include for a given build's wildcards.
     """
@@ -1005,6 +1008,7 @@ def _get_node_data_by_wildcards(wildcards):
     # Convert input files from wildcard strings to real file names.
     inputs = [input_file.format(**wildcards_dict) for input_file in inputs]
     return inputs
+
 rule update_description:
     message: "Prepare description file(s)"
     input:
@@ -1075,8 +1079,6 @@ rule export:
             --description {input.description} \
             --output {output.auspice_json} 2>&1 | tee {log}
         """
-
-
 rule incorporate_travel_history:
     message: "Adjusting main auspice JSON to take into account travel history"
     input:

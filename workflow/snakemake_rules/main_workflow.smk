@@ -1006,13 +1006,37 @@ rule update_description:
         sed -e 's/__DenmarkDate__/{params.data_date}/' {input.description} > {output.description}
         """
 
+rule update_auspice_config:
+    message: "Update auspice config to contain metadata columns"
+    input:
+        metadata = config['denmark_meta'],
+        auspice_config = lambda w: config["builds"][w.build_name]["auspice_config"] if "auspice_config" in config["builds"][w.build_name] else config["files"]["auspice_config"],
+    output:
+        auspice_config = outdir + "/{build_name}/auspice_config_{build_name}.json"
+    params:
+        exclude_columns = config.get('exclude_columns', '')
+    run:
+        exclude_columns = params.exclude_columns.split(",")
+        columns  = list()
+        with open(input.metadata, 'r', encoding='utf-8') as fh:
+            columns = fh.readline().strip().split("\t")
+
+        import json
+        with open(input.auspice_config, 'r', encoding='utf-8') as fh:
+            d = json.load(fh)
+            for c in columns:
+                if c not in exclude_columns and c not in d["filters"]:
+                    d["filters"].append(c)
+        with open(output.auspice_config, "w") as fh:
+            json.dump(d, fh, indent=2)
+
 rule export:
     message: "Exporting data files for for auspice"
     input:
         tree = rules.refine.output.tree,
         metadata = _get_metadata_by_wildcards,
         node_data = _get_node_data_by_wildcards,
-        auspice_config = lambda w: config["builds"][w.build_name]["auspice_config"] if "auspice_config" in config["builds"][w.build_name] else config["files"]["auspice_config"],
+        auspice_config = rules.update_auspice_config.output.auspice_config,
         colors = lambda w: config["builds"][w.build_name]["colors"] if "colors" in config["builds"][w.build_name] else ( config["files"]["colors"] if "colors" in config["files"] else rules.colors.output.colors.format(**w) ),
         lat_longs = config["files"]["lat_longs"],
         description = rules.update_description.output.description

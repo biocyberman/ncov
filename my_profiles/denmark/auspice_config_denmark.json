@@ -11,8 +11,13 @@
       "type": "categorical"
     },
     {
+      "key": "subclade_dk",
+      "title": "Subclade DK",
+      "type": "categorical"
+    },
+    {
       "key": "subclade_membership",
-      "title": "Subclade",
+      "title": "Emerging Clade",
       "type": "categorical"
     },
     {
@@ -234,6 +239,7 @@
   "filters": [
     "division",
     "subclade_membership",
+    "subclade_dk",
     "location",
     "recency",
     "country",

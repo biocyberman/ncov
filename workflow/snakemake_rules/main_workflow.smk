@@ -12,8 +12,31 @@ rule download:
 from pathlib import Path
 merged_data = Path(outdir).parent.joinpath("data")
 
-rule prepare_input:
+
+rule merge_input:
     message: "Merging denmark and global data to prepare input for the workflow"
+    input:
+        denmark_fasta = config["denmark_fasta"],
+        denmark_meta = config["denmark_meta"],
+        gisaid_fasta = config["gisaid_fasta"],
+        gisaid_meta = config["gisaid_meta"]
+    output:
+        metadata = f"{merged_data}/metadata_nextstrain.tsv",
+        sequences = f"{merged_data}/merged_sequences.fasta"
+    conda: config["conda_environment"]
+    params:
+        mergedir = merged_data
+    shell:
+        """
+        Rscript --vanilla --no-environ /opt/workflows/merge_clean_metadata.R -l {input.denmark_meta} -g {input.gisaid_meta} -o {params.mergedir}
+        awk 'NR > 1 {{print $1}}' {params.mergedir}/metadata_nextstrain.tsv |sort|uniq > {params.mergedir}/include.txt
+        # Dedup fasta: https://www.biostars.org/p/143617/#466790
+        cat {input.denmark_fasta} {input.gisaid_fasta}|awk '/^>/{{f=!d[$1];d[$1]=1}}f' | seqtk subseq - {params.mergedir}/include.txt > {output.sequences}
+        """
+
+
+rule copy_input:
+    message: "Copy Denmark data to place to prepare input for the workflow"
     input:
         denmark_fasta = config["denmark_fasta"],
         denmark_meta = config["denmark_meta"],
@@ -28,6 +51,25 @@ rule prepare_input:
         """
         cp {input.denmark_meta} {output.metadata}
         cat {input.denmark_fasta} {input.rootseqs} > {output.sequences}
+        """
+
+rule prepare_input:
+    message: "Merging denmark and global data to prepare input for the workflow"
+    input:
+        fasta = rules.merge_input.output.sequences if "Global" in BUILD_NAMES else rules.copy_input.output.sequences, 
+        meta = rules.merge_input.output.metadata if "Global" in BUILD_NAMES else rules.copy_input.output.metadata
+    output:
+        metadata = f"{merged_data}/input_metadata.tsv",
+        sequences = f"{merged_data}/input_sequences.fasta"
+    conda: config["conda_environment"]
+    params:
+        mergedir = merged_data
+    shell:
+        """
+        ln -sfr {input.meta} {output.metadata}
+        touch -h {output.metadata}
+        ln -sfr {input.fasta} {output.sequences}
+        touch -h {output.sequences}
 
         """
 from datetime import date, timedelta
@@ -1014,12 +1056,13 @@ rule update_description:
         description = lambda w: config["builds"][w.build_name]["description"] if "description" in config["builds"][w.build_name] else config["files"]["description"]
     params:
         data_date = config["data_date"],
+        gisaid_date = config["gisaid_date"]
     output:
         description = outdir + "/{build_name}/description.md"
     conda: config["conda_environment"]
     shell:
         """
-        sed -e 's/__DenmarkDate__/{params.data_date}/' {input.description} > {output.description}
+        sed -e 's/__DenmarkDate__/{params.data_date}/;s/__GisaidDate__/{params.gisaid_date}/' {input.description} > {output.description}
         """
 
 rule update_auspice_config:
@@ -1135,7 +1178,7 @@ rule finalize:
 checkpoint ncov_clade_assignment:
     message: "Asign clades using nextstrain's asignment script"
     input:
-        alignment = rules.mask.output.alignment,
+        alignment = rules.combine_samples.output.alignment,
         subclades = rules.rename_subclades.output.ncov_clade,
         clades = config["files"]["clades"]
     output:

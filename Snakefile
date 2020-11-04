@@ -71,7 +71,9 @@ if "builds" not in config:
         }
     }
 
-BUILD_NAMES = list(config["builds"].keys())
+# This is customization for Denmark. The full build names below (i.e. Denmark_Light, Denmark_Full, Test, etc) must match configuration in my_profiles/denmark/builds.yml
+short_build_names = {'light': 'Denmark_Light', 'full': 'Denmark_Full', 'global': 'Global', 'test': 'Test'}
+BUILD_NAMES = [short_build_names[k] for k in config['custom_build'].split(',')] if "custom_build" in config else list(config["builds"].keys())
 
 # Define patterns we expect for wildcards.
 wildcard_constraints:

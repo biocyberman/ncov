@@ -1004,7 +1004,6 @@ def _get_node_data_by_wildcards(wildcards):
     # Convert input files from wildcard strings to real file names.
     inputs = [input_file.format(**wildcards_dict) for input_file in inputs]
     return inputs
-
 rule update_description:
     message: "Prepare description file(s)"
     input:
@@ -1030,6 +1029,8 @@ rule update_auspice_config:
         exclude_columns = config.get('exclude_columns', '')
     run:
         exclude_columns = params.exclude_columns.split(",")
+        # exclude some dummy fields
+        exclude_columns.extend(['strain', 'virus', 'host', 'country', 'region', 'date_submitted', 'region_exposure', 'division_exposure', 'length' ])
         columns  = list()
         with open(input.metadata, 'r', encoding='utf-8') as fh:
             columns = fh.readline().strip().split("\t")

@@ -827,7 +827,7 @@ rule resolve_clades:
         clades = config["files"]["clades"],
         metadata = _get_metadata_by_wildcards,
         reference = config["files"]["reference"],
-        alignment = rules.combine_samples.output.alignment
+        alignment = rules.mask.output.alignment
     output:
         clades_dk = outdir + "/{build_name}/resolved_clades.json",
         tip_cluster = outdir + "/{build_name}/tip_cluster.json",

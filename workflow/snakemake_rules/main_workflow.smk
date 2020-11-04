@@ -21,7 +21,7 @@ rule merge_input:
         gisaid_fasta = config["gisaid_fasta"],
         gisaid_meta = config["gisaid_meta"]
     output:
-        metadata = f"{merged_data}/metadata_nextstrain.tsv",
+        metadata = f"{merged_data}/metadata_nextstrain_DKglobal.tsv",
         sequences = f"{merged_data}/merged_sequences.fasta"
     conda: config["conda_environment"]
     params:
@@ -29,7 +29,7 @@ rule merge_input:
     shell:
         """
         Rscript --vanilla --no-environ /opt/workflows/merge_clean_metadata.R -l {input.denmark_meta} -g {input.gisaid_meta} -o {params.mergedir}
-        awk 'NR > 1 {{print $1}}' {params.mergedir}/metadata_nextstrain.tsv |sort|uniq > {params.mergedir}/include.txt
+        awk 'NR > 1 {{print $1}}' {params.mergedir}/metadata_nextstrain_DKglobal.tsv |sort|uniq > {params.mergedir}/include.txt
         # Dedup fasta: https://www.biostars.org/p/143617/#466790
         cat {input.denmark_fasta} {input.gisaid_fasta}|awk '/^>/{{f=!d[$1];d[$1]=1}}f' | seqtk subseq - {params.mergedir}/include.txt > {output.sequences}
         """

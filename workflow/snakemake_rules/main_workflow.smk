@@ -1196,3 +1196,23 @@ checkpoint ncov_clade_assignment:
         --chunk-size  48 \
         --output {output.clades}
         """
+
+rule get_mutations:
+    message: "Get direct mutations by comparing aligned strain sequence with reference"
+    input:
+        reference = config["files"]["reference"],
+        alignment = rules.aggregate_alignments.output.alignment
+    output:
+        muts = outdir + "/{build_name}/mutations/tip_all_mutations.tsv",
+    log:
+        "logs/{build_name}/extract_SNPS.txt"
+    params:
+        refid = 'Wuhan/Hu-1/2019',
+        out = outdir + "/{build_name}/mutations"
+    conda: config["conda_environment"]
+    shell:
+        """
+        python scripts/extract_SNPs.py --reference {input.reference} \
+        --alignment {input.alignment} \
+        -o {params.out} --refid {params.refid} 2>&1 | tee {log}
+        """

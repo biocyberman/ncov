@@ -49,6 +49,9 @@ subsampling:
       seq_per_group: 20
       exclude: "--exclude-where 'country!={country}'"
       max_date: numeric_date(date.today() - timedelta(days=30))
+      priorities:
+        type: "proximity"
+        focus: "last_month"
 
   denmark_full:
     # Focal samples for country
@@ -69,6 +72,9 @@ subsampling:
       seq_per_group: 20
       exclude: "--exclude-where 'country!={country}'"
       max_date: numeric_date(date.today() - timedelta(days=30))
+      priorities:
+        type: "proximity"
+        focus: "last_month"
     # Contextual samples from country's region
     region:
       group_by: "country year month"
@@ -100,6 +106,9 @@ subsampling:
       seq_per_group: 10
       exclude: "--exclude-where 'country!={country}'"
       max_date: numeric_date(date.today() - timedelta(days=30))
+      priorities:
+        type: "proximity"
+        focus: "last_month"
     # Contextual samples from country's region
     region:
       group_by: "country year month"

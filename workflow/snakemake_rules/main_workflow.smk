@@ -1182,7 +1182,7 @@ checkpoint ncov_clade_assignment:
     message: "Asign clades using nextstrain's asignment script"
     input:
         alignment = rules.combine_samples.output.alignment,
-        subclades = rules.rename_subclades.output.ncov_clade,
+        subclades = config['files']['subclades'],
         clades = config["files"]["clades"]
     output:
        clades = outdir + "/{build_name}/nextstrain_clade_assignment.tsv"

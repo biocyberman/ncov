@@ -1206,7 +1206,7 @@ rule get_mutations:
         reference = config["files"]["reference"],
         alignment = rules.aggregate_alignments.output.alignment
     output:
-        muts = outdir + "/{build_name}/mutations/tip_all_mutations.tsv",
+        muts = outdir + "/{build_name}/mutations/all_mutations.tsv",
     log:
         "logs/{build_name}/extract_SNPS.txt"
     params:
@@ -1215,7 +1215,7 @@ rule get_mutations:
     conda: config["conda_environment"]
     shell:
         """
-        python scripts/extract_SNPs.py --reference {input.reference} \
+        augur extract-snps  --reference {input.reference} \
         --alignment {input.alignment} \
         -o {params.out} --refid {params.refid} 2>&1 | tee {log}
         """

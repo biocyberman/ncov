@@ -832,6 +832,8 @@ rule resolve_clades:
         clades_dk = outdir + "/{build_name}/resolved_clades.json",
         tip_cluster = outdir + "/{build_name}/tip_cluster.json",
         new_clades = outdir + "/{build_name}/new_clades.tsv"
+    params:
+        refid = 'Wuhan/Hu-1/2019'
     log:
         "logs/resolve_clades_{build_name}.txt"
     conda: config["conda_environment"]
@@ -845,6 +847,7 @@ rule resolve_clades:
             --metadata {input.metadata} \
             --new-clades {output.new_clades} \
             --max-depth 3 \
+            --refid {params.refid} \
             --output-tip-cluster {output.tip_cluster} \
             --output-node-data {output.clades_dk} 2>&1 | tee {log}
         """

@@ -32,6 +32,8 @@ user_subsampling = copy.deepcopy(config.get("subsampling", {}))
 configfile: "defaults/parameters.yaml"
 validate(config, schema="workflow/schemas/config.schema.yaml")
 
+outdir= config['outdir'] if "outdir" in config else "results"
+
 # Check for overlapping subsampling schemes in user and default
 # configurations. For now, issue a deprecation warning, so users know they
 # should rename their subsampling schemes. In the future, this reuse of the same
@@ -76,8 +78,8 @@ localrules: download
 # Create a standard ncov build for auspice, by default.
 rule all:
     input:
-        auspice_json = expand("auspice/ncov_{build_name}.json", build_name=BUILD_NAMES),
-        tip_frequency_json = expand("auspice/ncov_{build_name}_tip-frequencies.json", build_name=BUILD_NAMES)
+        auspice_json = expand(outdir + "/auspice/ncov_{build_name}.json", build_name=BUILD_NAMES),
+        tip_frequency_json = expand(outdir + "/auspice/ncov_{build_name}_tip-frequencies.json", build_name=BUILD_NAMES)
 
 rule clean:
     message: "Removing directories: {params}"

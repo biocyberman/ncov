@@ -1105,7 +1105,7 @@ rule export:
         lat_longs = config["files"]["lat_longs"],
         description = rules.update_description.output.description
     output:
-        auspice_json = outdir + "/{build_name}/ncov_with_accessions.json"
+        auspice_json = outdir + "/{build_name}/ncov_with_accessions.json",
         root_sequence_json = outdir + "/{build_name}/ncov_with_accessions_root-sequence.json"
     log:
         "logs/export_{build_name}.txt"

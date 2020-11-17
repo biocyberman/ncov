@@ -153,6 +153,22 @@
     {
       "key": "outbreak",
       "type": "categorical"
+    },
+    {
+      "key": "week",
+      "type": "continuous"
+    },
+    {
+      "key": "age",
+      "type": "continuous"
+    },
+    {
+      "key": "farm",
+      "type": "categorical"
+    },
+    {
+      "key": "host",
+      "type": "categorical"
     }
   ],
   "geo_resolutions": [
@@ -172,7 +188,9 @@
     "subclade_membership",
     "subclade_dk",
     "location",
-    "date"
+    "date",
+    "country_exposure",
+    "host"
   ],
   "panels": [
     "tree",

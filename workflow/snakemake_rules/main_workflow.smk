@@ -94,7 +94,7 @@ rule filter:
         min_length = config["filter"]["min_length"],
         exclude_where = config["filter"]["exclude_where"],
         min_date = config["filter"]["min_date"],
-        date = numeric_date(date.today())
+        date = date.today().strftime("%Y-%m-%d")
     conda: config["conda_environment"]
     shell:
         """
@@ -425,8 +425,8 @@ rule subsample:
          - group by: {params.group_by}
          - sequences per group: {params.sequences_per_group}
          - subsample max sequences: {params.subsample_max_sequences}
-         - min-date: {params.max_date}
-         - max-date: {params.min_date}
+         - min-date: {params.min_date}
+         - max-date: {params.max_date}
          - exclude: {params.exclude_argument}
          - include: {params.include_argument}
          - query: {params.query_argument}
@@ -439,6 +439,8 @@ rule subsample:
         priorities = get_priorities
     output:
         sequences = outdir + "/{build_name}/sample-{subsample}.fasta"
+    log:
+        "logs/subsample_{build_name}_{subsample}.txt"
     params:
         group_by = _get_specific_subsampling_setting("group_by"),
         sequences_per_group = _get_specific_subsampling_setting("seq_per_group", optional=True),
@@ -559,7 +561,7 @@ rule tree:
         "logs/tree_{build_name}.txt"
     benchmark:
         "benchmarks/tree_{build_name}.txt"
-    threads: 16
+    threads: 8
     resources:
         # Multiple sequence alignments can use up to 40 times their disk size in
         # memory, especially for larger alignments.
@@ -609,6 +611,7 @@ rule refine:
         date_inference = config["refine"]["date_inference"],
         divergence_unit = config["refine"]["divergence_unit"],
         clock_filter_iqd = config["refine"]["clock_filter_iqd"],
+        keep_polytomies = "--keep-polytomies" if config["refine"].get("keep_polytomies", False) else "",
         timetree = "" if config["refine"].get("no_timetree", False) else "--timetree"
     conda: config["conda_environment"]
     shell:
@@ -621,6 +624,7 @@ rule refine:
             --output-node-data {output.node_data} \
             --root {params.root} \
             {params.timetree} \
+            {params.keep_polytomies} \
             --clock-rate {params.clock_rate} \
             --clock-std-dev {params.clock_std_dev} \
             --coalescent {params.coalescent} \
@@ -724,13 +728,29 @@ rule traits:
             --sampling-bias-correction {params.sampling_bias_correction} 2>&1 | tee {log}
         """
 
+def _get_clade_files(wildcards):
+    if "subclades" in config["builds"][wildcards.build_name]:
+        return [config["files"]["clades"], config["builds"][wildcards.build_name]["subclades"]]
+    else:
+        return config["files"]["clades"]
+
+rule clade_files:
+    input:
+        clade_files = _get_clade_files
+    output:
+        "results/{build_name}/clades.tsv"
+    shell:
+        '''
+        cat {input.clade_files} > {output}
+        '''
+
 rule clades:
     message: "Adding internal clade labels"
     input:
         tree = rules.refine.output.tree,
         aa_muts = rules.translate.output.node_data,
         nuc_muts = rules.ancestral.output.node_data,
-        clades = config["files"]["clades"]
+        clades = rules.clade_files.output
     output:
         ncov_clade = outdir + "/{build_name}/clades.json"
     log:
@@ -1101,7 +1121,8 @@ rule export:
         lat_longs = config["files"]["lat_longs"],
         description = rules.update_description.output.description
     output:
-        auspice_json = outdir + "/{build_name}/ncov_with_accessions.json"
+        auspice_json = outdir + "/{build_name}/ncov_with_accessions.json",
+        root_sequence_json = outdir + "/{build_name}/ncov_with_accessions_root-sequence.json"
     log:
         "logs/export_{build_name}.txt"
     params:
@@ -1114,6 +1135,7 @@ rule export:
             --metadata {input.metadata} \
             --node-data {input.node_data} \
             --auspice-config {input.auspice_config} \
+            --include-root-sequence \
             --colors {input.colors} \
             --lat-longs {input.lat_longs} \
             --title {params.title:q} \
@@ -1151,11 +1173,13 @@ rule finalize:
         # Would probably need to return the original genome, not these masked and aligned ones
         genomes = rules.combine_samples.output.alignment,
         auspice_json = rules.incorporate_travel_history.output.auspice_json,
-        frequencies = rules.tip_frequencies.output.tip_frequencies_json
+        frequencies = rules.tip_frequencies.output.tip_frequencies_json,
+        root_sequence_json = rules.export.output.root_sequence_json
     output:
         genomes = out_auspice + "/ncov_{build_name}.fasta",
         auspice_json = out_auspice + "/ncov_{build_name}.json",
-        tip_frequency_json = out_auspice + "/ncov_{build_name}_tip-frequencies.json"
+        tip_frequency_json = out_auspice + "/ncov_{build_name}_tip-frequencies.json",
+        root_sequence_json = out_auspice + "/ncov_{build_name}_root-sequence.json"
     log:
         "logs/fix_colorings_{build_name}.txt"
     conda: config["conda_environment"]
@@ -1165,6 +1189,7 @@ rule finalize:
             --input {input.auspice_json} \
             --output {output.auspice_json} 2>&1 | tee {log} &&
         cp {input.frequencies} {output.tip_frequency_json}
+        cp {input.root_sequence_json} {output.root_sequence_json}
         # Copy genomes to enable genome download feature by default
         cp {input.genomes} {output.genomes} 
         """

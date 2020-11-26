@@ -26,6 +26,13 @@ builds:
     country: Denmark
     auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
 
+  Denmark_Mink:
+    subsampling_scheme: denmark_mink
+    geographic_scale: division
+    region: Europe
+    country: Denmark
+    auspice_config: "my_profiles/denmark/auspice_config_denmark.json"
+
   Global:
     subsampling_scheme: global_subsample
     geographic_scale: country
@@ -52,6 +59,12 @@ subsampling:
       priorities:
         type: "proximity"
         focus: "last_month"
+  denmark_mink:
+    # Focal samples for country
+    country:
+      group_by: "division year month"
+      seq_per_group: 9000
+      exclude: "--exclude-where 'country!={country}' 'host=human'"
 
   denmark_full:
     # Focal samples for country

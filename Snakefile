@@ -72,7 +72,7 @@ if "builds" not in config:
     }
 
 # This is customization for Denmark. The full build names below (i.e. Denmark_Light, Denmark_Full, Test, etc) must match configuration in my_profiles/denmark/builds.yml
-short_build_names = {'light': 'Denmark_Light', 'full': 'Denmark_Full', 'global': 'Global', 'test': 'Test'}
+short_build_names = {'light': 'Denmark_Light', 'full': 'Denmark_Full', 'global': 'Global', 'mink': "Denmark_Mink", 'test': 'Test'}
 BUILD_NAMES = [short_build_names[k] for k in config['custom_build'].split(',')] if "custom_build" in config else list(config["builds"].keys())
 
 # Define patterns we expect for wildcards.
@@ -90,7 +90,7 @@ rule all:
         auspice_json = expand(out_auspice + "/ncov_{build_name}.json", build_name=BUILD_NAMES),
         tip_frequency_json = expand(out_auspice + "/ncov_{build_name}_tip-frequencies.json", build_name=BUILD_NAMES),
         global_clade_assignment = expand(outdir + "/{build_name}/nextstrain_clade_assignment.tsv", build_name=BUILD_NAMES),
-        direct_mutaions  = [outdir + f"/{b}/mutations/all_mutations.tsv" for b in BUILD_NAMES if "Global" in BUILD_NAMES or "Test" in BUILD_NAMES]
+        direct_mutaions  = [outdir + f"/{b}/mutations/all_mutations.tsv" for b in BUILD_NAMES if b in ["Global", "Test", "Denmark_Mink"]]
 
 rule clean:
     message: "Removing directories: {params}"

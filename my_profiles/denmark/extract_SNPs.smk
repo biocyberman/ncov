@@ -43,7 +43,7 @@ wildcard_constraints:
 # Create a standard ncov build for auspice, by default.
 rule all:
     input:
-        direct_mutaions  = outdir + "/tip_all_mutations.tsv"
+        direct_mutaions  = outdir + "/all_mutations.tsv"
 
 rule clean:
     message: "Removing directories: {params}"
@@ -383,18 +383,20 @@ rule get_mutations:
     message: "Get direct mutations by comparing aligned strain sequence with reference"
     input:
         reference = config["files"]["reference"],
-        alignment = rules.aggregate_alignments.output.alignment
+        alignment = config["alignment"] if (config.get("alignment") and path.exists(config.get("alignment")))  else rules.aggregate_alignments.output.alignment
     output:
-        muts = outdir + "/tip_all_mutations.tsv",
+        muts = outdir + "/all_mutations.tsv",
     log:
         "logs/extract_SNPS.txt"
     params:
-        refid = 'Wuhan/Hu-1/2019'
+        refid = config.get("reference_id", 'Wuhan/Hu-1/2019'),
+        variant_list = f'--variant-list {config["variant_list"]}' if (config.get("variant_list") is not None)  else ""
     conda: config["conda_environment"]
     shell:
         """
-        python script/extract_SNPs.py --reference {input.reference} \
+        augur extract-snps --reference {input.reference} \
         --alignment {input.alignment} \
+        {params.variant_list} \
         -o {outdir} --refid {params.refid} 2>&1 | tee {log}
         """
 

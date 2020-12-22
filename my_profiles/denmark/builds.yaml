@@ -49,13 +49,13 @@ subsampling:
       group_by: "division year month"
       seq_per_group: 9000
       exclude: "--exclude-where 'country!={country}'"
-      min_date: numeric_date(date.today() - timedelta(days=30))
+      min_date: numeric_date(date.today() - timedelta(days=60))
 
     earlier:
       group_by: "division year month"
       seq_per_group: 20
       exclude: "--exclude-where 'country!={country}'"
-      max_date: numeric_date(date.today() - timedelta(days=30))
+      max_date: numeric_date(date.today() - timedelta(days=60))
       priorities:
         type: "proximity"
         focus: "last_month"
